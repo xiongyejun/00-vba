@@ -25,10 +25,8 @@ Sub get_file_byte()
 End Sub
 
  Sub save_file_from_hex()
-    Dim i As Long, j As Long
-    Dim arr_data, str_hex As String
+    Dim arr_data()
     Dim i_row As Long
-    Dim file_buffer() As Byte
     Dim fso As Object
     Dim save_file_name As String
     
@@ -36,32 +34,22 @@ End Sub
     If save_file_name = "" Then Exit Sub
     
     Set fso = CreateObject("Scripting.FileSystemObject")
-    i_row = Range("A" & Cells.Rows.Count).Row
+    i_row = Range("A" & Cells.Rows.Count).End(xlUp).Row
     arr_data = Range("A1:A" & i_row).Value
-    
-    For i = 2 To i_row
-        str_hex = str_hex & arr_data(i, 1)
-    Next i
-    
-    ReDim file_buffer(VBA.Len(str_hex) / 2 - 1) As Byte
-    
-    For i = 1 To VBA.Len(str_hex) Step 2
-        file_buffer((i - 1) / 2) = 0 + ("&H" & VBA.Mid$(str_hex, i, 2))
-    Next i
     
     save_file_name = save_file_name & "\" & arr_data(1, 1)
     
     fso.CreateTextFile save_file_name
     
-    write_txt save_file_name, file_buffer
+    write_txt save_file_name, arr_data
     MsgBox "OK"
     
-    Erase file_buffer, arr_data
+    Erase arr_data
     Set fso = Nothing
  
  End Sub
  
- Function read_txt(txt_file_name As String, file_buffer() As Byte)
+Function read_txt(txt_file_name As String, file_buffer() As Byte)
     Dim num_file As Integer
     
     num_file = FreeFile
@@ -70,17 +58,31 @@ End Sub
     ReDim file_buffer(LOF(num_file) - 1) As Byte
     Get #num_file, 1, file_buffer
     Close num_file
- End Function
+End Function
  
- Function write_txt(txt_file_name As String, file_buffer() As Byte)
+Function write_txt(txt_file_name As String, arr_data())
     Dim num_file As Integer
+    Dim file_buffer() As Byte
+    Dim i As Long, j As Long
+    Dim str_hex As String
     
     num_file = FreeFile
     Open txt_file_name For Binary Access Write As #num_file
-    Put #num_file, 1, file_buffer
+     
+    For j = 2 To UBound(arr_data, 1)
+        str_hex = arr_data(j, 1)
+        
+        ReDim file_buffer(VBA.Len(str_hex) / 2 - 1) As Byte
+        
+        For i = 1 To VBA.Len(str_hex) Step 2
+            file_buffer((i - 1) / 2) = 0 + ("&H" & VBA.Mid$(str_hex, i, 2))
+        Next i
+        Put #num_file, , file_buffer
+    Next j
     Close num_file
     
-    End Function
+    Erase file_buffer
+End Function
     
 Function byte_to_hex(file_buffer() As Byte)
     Dim i As Long

@@ -78,3 +78,84 @@ Function get_pic_from_bitmap(bitmap_hwnd As Long) As StdPicture
     OleCreatePictureIndirect pic, IID_IDispatch(0), 1, get_pic_from_bitmap
 End Function
 
+
+GDI
+
+Option Explicit
+
+Private Type GUID
+    Data1 As Long
+    Data2 As Integer
+    Data3 As Integer
+    Data4(0 To 7) As Byte
+End Type
+
+Private Type GdiplusStartupInput
+    GdiplusVersion As Long
+    DebugEventCllback As Long
+    SuppressBackgroundThread As Long
+    SuppressExternalCodecs As Long
+End Type
+
+Private Type EncoderParameter
+    GUID As GUID
+    NumberOfValues As Integer
+    type As Long
+    Value As Long
+End Type
+
+Private Type EncoderParameters
+    Count As Long
+    Parameter As EncoderParameter
+End Type
+
+Private Declare Function GdiplusStartup Lib "GDIPlus" (token As Long, inputbuf As GdiplusStartupInput, ByVal outputbuf As Long) As Long
+Private Declare Function GdiplusShutdown Lib "GDIPlus" (ByVal token As Long) As Long
+Private Declare Function GdipDisposeImage Lib "GDIPlus" (ByVal image As Long) As Long
+Private Declare Function GdipSaveImageToFile Lib "GDIPlus" (ByVal image As Long, ByVal filename As Long, clsidEncoder As GUID, encoderParams As Any) As Long
+Private Declare Function CLSIDFromString Lib "ole32.dll" (ByVal str As Long, id As GUID) As Long
+Private Declare Function GdipCreateBitmapFromHBITMAP Lib "GDIPlus" (ByVal hbm As Long, ByVal hPal As Long, BITMAP As Long) As Long
+
+'quality jpg文件的质量，1-100之间的数值，数值越大，图片质量越高
+Function save_image_by_gdi(hbmp As Long, Optional ByVal quality As Long = 80)
+    Dim lRes As Long
+    Dim lGDIP As Long
+    Dim tSI As GdiplusStartupInput
+    Dim lBitmap As Long
+    Dim file_name As String
+    
+    tSI.GdiplusVersion = 1
+    lRes = GdiplusStartup(lGDIP, tSI, 0)
+    
+    If lRes = 0 Then
+        lRes = GdipCreateBitmapFromHBITMAP(hbmp, 0, lBitmap)
+        
+        If lRes = 0 Then
+            Dim tJpgEncoder As GUID
+            Dim tParams As EncoderParameters
+            
+            '初始化解码器的GUID标识
+            CLSIDFromString StrPtr("{557CF401-1A04-11D3-9A73-0000F81EF32E}"), tJpgEncoder
+            
+            '设置解码器参数
+            tParams.Count = 1
+            With tParams.Parameter  'Quality
+                '得到Quality参数的GUID标识
+                CLSIDFromString StrPtr("{1D5BE4B5-FA4A-452D-9CDD-5DB35105E7EB}"), .GUID
+                .NumberOfValues = 1
+                .type = 4
+                .Value = VarPtr(quality)
+            End With
+            
+            '保存图像
+            file_name = Application.GetSaveAsFilename(InitialFileName:=Format(Now(), "yyyy-mm-ddHHMMSS") & ".jpg", filefilter:="JPEG文件(*.jpg),*.jpg", Title:="另存为图片")
+            lRes = GdipSaveImageToFile(lBitmap, StrPtr(file_name), tJpgEncoder, tParams)
+            
+            GdipDisposeImage lBitmap
+        End If
+        
+        GdiplusShutdown lGDIP
+    End If
+End Function
+
+

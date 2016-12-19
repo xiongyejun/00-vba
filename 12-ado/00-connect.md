@@ -1,4 +1,23 @@
 
+##访问XLSM:##
+
+    Provier=Microsoft Ace OLEDB.12.0;Data Source=带路径的文件名;Extended Properties="Excel 12.0 Macro;HDR=NO";
+
+##访问文本文件(如txt,csv等),数据源只要求指明文件所在的文件夹:##
+
+    Provier=Microsoft Ace OLEDB.12.0;Data Source=文本文件所在文件夹;Extended Properties="text;HDR=YES;FMT=Delimited";
+
+
+##访问数据Access##
+ 
+  没有密码:
+  
+    Provier=Microsoft Ace OLEDB.12.0;Data Source=带路径的文件名;
+    
+  有密码:
+   
+   Provier=Microsoft Ace OLEDB.12.0;Data Source=带路径的文件名;Jet OLEDB:Database Password=密码;
+
 ##MYSQL数据库##
 
 连接到数据库
@@ -86,11 +105,12 @@
 	Function ClearObj()
 		Set Cnn = Nothing
 		Set Records = Nothing
-		End Function
+	End Function
 		
-		'获得数据表的字段名称
-		'OpenSchema可以获得数据库的各种信息
-		Function InputColumns(ByVal SheetName As String)
+'获得数据表的字段名称
+'OpenSchema可以获得数据库的各种信息
+
+	Function InputColumns(ByVal SheetName As String)
 		CnnOpen "localhost", "mydb", "employees", "root", ""
 		Set Records = Cnn.OpenSchema(adSchemaColumns)
 		

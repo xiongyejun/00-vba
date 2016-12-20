@@ -1,5 +1,9 @@
+
+
+
 https://www.connectionstrings.com/
 [enter link description here](https://www.connectionstrings.com/)
+# 使用OLEDB数据提供程序#
 
 ##访问XLSM:##
 
@@ -19,6 +23,40 @@ https://www.connectionstrings.com/
   有密码:
    
    Provier=Microsoft Ace OLEDB.12.0;Data Source=带路径的文件名;Jet OLEDB:Database Password=密码;
+
+##访问非Office数据库(如SQL Server/Oracle/MySQL)情况特别复杂,请参考提供商的说明.##
+
+   举一例要求提供服务提供者的例子,使用SQL Server Native Client Provider提供者访问SQL Server 2012:
+   
+    Provider=SQLXMLOLEDB.4.0;Data Provider=SQLNCLI11;Data Source=服务器地址;Initial Catalog=数据库;User Id=账户名;Password=密码;
+
+#使用OLEDB数据提供程序——无DSN连接#
+
+##使用Ace OLEDB12.0的ODBC驱动程序访问Access2010数据库:##
+
+	Driver={Microsoft Access Driver (*.mdb, *.accdb)};Dbq=数据库路径名;Uid=Admin;Pwd=;
+
+##使用Microsoft SQL Server ODBC Driver访问SQL Server 2000##
+
+	 Driver={SQL Server};Server=服务器地址;Database=数据库;Uid=用户名;Pwd=密码;
+
+
+
+#使用OLEDB数据提供程序——有DSN连接#
+
+##访问EXCEL连接字符串:##
+     DSN=DSN名;
+     
+  ##访问带密码的Access数据库:##
+  
+     DSN=DSN名;UId=Admin;Pwd=;
+    
+   说明:
+   
+DSN名,是ODBC驱动程序的别名,有时也叫DSN数据源.是用户用ODBC管理器配置时自定义的.在配置中如果已经指定了数据源路径和文件名,则连接字符串中可不用带数据源路径名,也可带数据源路径名或其变量; 如果没有指定,则必须带数据源路径文件名.形如:
+
+	    DSN=DSN名;Dbq=数据源路径名;
+
 
 ##MYSQL数据库##
 

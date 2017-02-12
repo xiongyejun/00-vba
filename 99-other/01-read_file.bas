@@ -1,9 +1,7 @@
 Attribute VB_Name = "read_file"
 Option Explicit
 
-
-
-Sub get_file_byte()
+Sub GetFileByte()
     Dim write_file_name As String
     Dim file_buffer() As Byte
     Dim file_name As String
@@ -49,7 +47,7 @@ End Sub
  
  End Sub
  
-Function read_txt(txt_file_name As String, file_buffer() As Byte)
+Private Function read_txt(txt_file_name As String, file_buffer() As Byte)
     Dim num_file As Integer
     
     num_file = FreeFile
@@ -60,7 +58,7 @@ Function read_txt(txt_file_name As String, file_buffer() As Byte)
     Close num_file
 End Function
  
-Function write_txt(txt_file_name As String, arr_data())
+Private Function write_txt(txt_file_name As String, arr_data())
     Dim num_file As Integer
     Dim file_buffer() As Byte
     Dim i As Long, j As Long
@@ -84,20 +82,20 @@ Function write_txt(txt_file_name As String, arr_data())
     Erase file_buffer
 End Function
     
-Function byte_to_hex(file_buffer() As Byte)
+Private Function byte_to_hex(file_buffer() As Byte)
     Dim i As Long
     Dim str As String
     Dim k As Long
     
     k = 1
     For i = 0 To UBound(file_buffer)
-        If i Mod 50 = 0 Then
+        If i Mod 16 = 0 Then
             If i > 0 Then Cells(k, 1).Value = "'" & str
             str = ""
             k = k + 1
-            str = VBA.Right$("00" & VBA.Hex(file_buffer(i)), 2)
+            str = VBA.Right$("00" & VBA.Hex(file_buffer(i)), 2) & " "
         Else
-            str = str & VBA.Right$("00" & VBA.Hex(file_buffer(i)), 2)
+            str = str & VBA.Right$("00" & VBA.Hex(file_buffer(i)), 2) & " "
         End If
     Next i
     If str <> "" Then Cells(k, 1).Value = "'" & str
@@ -120,7 +118,7 @@ End Function
 
 Function GetFileName(Optional strFilter As String = "*.*") As String
     With Application.FileDialog(msoFileDialogOpen)
-'        .InitialFileName = ActiveWorkbook.path & "\" & strFilter
+        .InitialFileName = ActiveWorkbook.Path & "\" & strFilter
         If .Show = -1 Then                  ' -1代表确定，0代表取消
             GetFileName = .SelectedItems(1)
         Else
@@ -129,4 +127,6 @@ Function GetFileName(Optional strFilter As String = "*.*") As String
         End If
     End With
 End Function
+
+
 

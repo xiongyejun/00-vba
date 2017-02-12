@@ -105,3 +105,38 @@ h_end:
     Set AC_PD = Nothing
 End Function
 
+
+
+'函数名称：ExtractPDFpages
+'函数功能：调用Acrobat提取pdf的单个页面并输出到指定目录(命名规则为[原文件名 - p#.pdf])
+'参数:
+'1. sPDFfile；原始PDF文件的完整路径
+'2. sOutputFolder；提出的PDF页面的保存目录
+'注意：需要在装有【Acrobat Professional】软件的电脑上运行
+Sub ExtractPDFpages(sPDFfile As String, sOutputFolder As String)
+    Dim pdf, pdfSource
+    Dim iPageCount As Integer
+    Dim sFileName As String
+    
+    sFileName = sPDFfile
+    
+    Set pdf = CreateObject("AcroExch.PDDoc")
+    Set pdfSource = CreateObject("AcroExch.PDDoc")
+    pdfSource.Open sPDFfile
+    iPageCount = pdfSource.GetNumPages
+    
+    If Right(sOutputFolder, 1) <> "" Then
+        sOutputFolder = sOutputFolder & ""
+    End If
+    For i = 0 To iPageCount - 1
+        pdf.Create
+        pdf.InsertPages -1, pdfSource, i, 1, 0
+        pdf.Save 1, sOutputFolder & i + 1 & ".pdf"
+        pdf.Close
+        
+    Next
+    pdfSource.Close
+    Set pdf = Nothing
+    Set pdfSource = Nothing
+
+End Sub

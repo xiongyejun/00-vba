@@ -1,0 +1,152 @@
+Option Explicit
+
+Private WithEvents btnSelectFile As MSForms.CommandButton
+Private WithEvents btnHide As MSForms.CommandButton
+Private WithEvents btnUnHide As MSForms.CommandButton
+Private lbFileName As MSForms.Label
+Private frCheck As MSForms.Frame
+
+Dim cls_cf As CCompdocFile
+Dim arr()
+
+Private Sub UserForm_Initialize()
+    Dim i_left As Integer
+    Dim i_top As Integer
+    
+    i_left = 5
+    i_top = 5
+    
+    Set lbFileName = labelAdd(Me, "", i_left, i_top + 5, 100)
+    i_top = i_top + lbFileName.Height
+    Set btnSelectFile = btnAdd(Me, "选择文件", i_left, i_top)
+    
+    i_top = btnSelectFile.Height + i_top + 5
+    Set btnHide = btnAdd(Me, "隐藏模块", i_left, i_top)
+    Set btnUnHide = btnAdd(Me, "取消隐藏", i_left + btnHide.Width, i_top)
+    i_top = btnHide.Height + i_top + 5
+    Set frCheck = FrameAdd(Me, "VBA", i_left, i_top, 300)
+    
+    Me.Width = frCheck.Width + 20
+    Me.Height = frCheck.Top + frCheck.Height + 30
+End Sub
+
+Private Sub btnUnHide_Click()
+    Dim i As Long
+    Dim flag As Boolean
+    Dim str_module_name As String
+   
+    For i = 0 To frCheck.Controls.Count - 1
+        If frCheck.Controls(i).Value Then
+            If VBA.Left(frCheck.Controls(i).Caption, 5) = "(隐藏的)" Then
+                flag = True
+                str_module_name = Application.InputBox("请输入模块的名称。", Default:="Module=", Title:="(Module=)长度是7个字节", type:=2)
+                cls_cf.write_file_byte arr, i, str_module_name
+            End If
+        End If
+    Next i
+   
+    If flag Then MsgBox "OK"
+End Sub
+
+Private Sub btnHide_Click()
+    Dim i As Long
+    Dim flag As Boolean
+    
+    For i = 0 To frCheck.Controls.Count - 1
+        If frCheck.Controls(i).Value Then
+            flag = True
+            cls_cf.write_file_byte arr, i
+        End If
+    Next i
+    
+    If flag Then MsgBox "ok"
+End Sub
+
+Private Sub btnSelectFile_Click()
+    Dim i As Long
+    Dim cb As MSForms.CheckBox
+    Dim i_top As Integer
+   
+    Set cls_cf = New CCompdocFile
+   
+    lbFileName.Caption = cls_cf.path
+    frCheck.Controls.Clear
+    
+    If cls_cf.ready Then
+        If cls_cf.FindVba(arr) = 0 Then Exit Sub
+    End If
+   
+    i_top = 5
+    For i = 0 To UBound(arr)
+   
+        Set cb = cbAdd(frCheck, VBA.CStr(arr(i, 0)), 5, i_top)
+        i_top = i_top + cb.Height + 5
+       
+    Next i
+   frCheck.Height = i_top + 10
+   
+   Me.Height = frCheck.Height + frCheck.Top + 50
+End Sub
+
+
+Function cbAdd(usf As Object, cbName As String, cbLeft As Integer, cbTop As Integer, Optional cbWidth As Integer = 108, Optional cbHeight As Integer = 18) As MSForms.CheckBox
+    Dim cb As MSForms.CheckBox
+   
+    Set cb = usf.Controls.Add("Forms.CheckBox.1")
+    With cb
+        .Caption = cbName
+        .Left = cbLeft
+        .Width = cbWidth
+        .Top = cbTop
+        .Height = cbHeight
+        .AutoSize = True
+    End With
+   
+    Set cbAdd = cb
+End Function
+
+Function btnAdd(usf As Object, btnName As String, btnLeft As Integer, btnTop As Integer, Optional btnWidth As Integer = 72, Optional btnHeight As Integer = 24) As MSForms.CommandButton
+    Dim btn As MSForms.CommandButton
+    
+    Set btn = usf.Controls.Add("Forms.CommandButton.1")
+    With btn
+        .Caption = btnName
+        .Left = btnLeft
+        .Width = btnWidth
+        .Top = btnTop
+        .Height = btnHeight
+    End With
+    
+    Set btnAdd = btn
+End Function
+Function FrameAdd(usf As Object, frCaption As String, frLeft As Integer, frTop As Integer, Optional frWidth As Integer = 144, Optional frHeight As Integer = 216) As MSForms.Frame
+    Dim fr As MSForms.Frame
+    
+    Set fr = usf.Controls.Add("Forms.Frame.1")
+    With fr
+        .Left = frLeft
+        .Width = frWidth
+        .Caption = frCaption
+        .Top = frTop
+        .Height = frHeight
+    End With
+    
+    Set FrameAdd = fr
+End Function
+
+Function labelAdd(usf As Object, lbName As String, lbLeft As Integer, lbTop As Integer, Optional lbWidth As Integer = 72, Optional lbHeight As Integer = 18) As MSForms.Label
+    Dim lb As MSForms.Label
+    
+    Set lb = usf.Controls.Add("Forms.Label.1")
+    With lb
+        .WordWrap = False
+        .AutoSize = True
+        .Caption = lbName
+        .Left = lbLeft
+        .Width = lbWidth
+        .Top = lbTop
+        .Height = lbHeight
+    End With
+    
+    Set labelAdd = lb
+End Function

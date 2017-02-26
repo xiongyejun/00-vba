@@ -25,6 +25,7 @@ Sub cmd_imp_Click()
 
 End Sub
 
+'Adobe Acrobat 7.0 Browser Control Type Library 1.0
 Function ReadPDFToExcel(PDF_File As String)
     Dim AC_PD As Acrobat.AcroPDDoc
     Dim AC_Hi As Acrobat.AcroHiliteList

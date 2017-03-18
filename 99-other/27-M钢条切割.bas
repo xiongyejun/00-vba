@@ -8,12 +8,19 @@ Sub vba_main()
     Dim arr_num() As Long   '每个长度的切割数量
     Dim arr() As Long
     Dim n As Long
+    Dim best_len As Long    '价值量最好的，也就是拆分时按这个拆分
+    Dim d_best As Double
     
     '获取已知的每个长度对应的价格
     i_col = Range("A1").End(xlToRight).Column
     ReDim arr_price(i_col - 1) As Long
+    d_best = 0#
     For i = 2 To i_col
         arr_price(i - 1) = Cells(2, i).Value
+        If VBA.CDbl(Cells(2, i).Value / Cells(1, i).Value) > d_best Then
+            d_best = VBA.CDbl(Cells(2, i).Value / Cells(1, i).Value)
+            best_len = Cells(1, i).Value
+        End If
     Next i
     
     'n行0列，对应每个长度的最优解价格
@@ -26,7 +33,7 @@ Sub vba_main()
             n = Cells(i, 1).Value
             ReDim arr_num(1 To Cells(1, i_col).Value) As Long
             
-            .Offset(0, 10).Value = BottomUpCutRod(arr_price, n, arr, arr_num)
+            .Offset(0, 10).Value = BottomUpCutRod(arr_price, n, arr, arr_num, best_len)
             .Resize(1, i_col - 1).Value = arr_num
         End With
     Next i
@@ -35,7 +42,8 @@ End Sub
 'arr          临时存储每个长度的最优解arr(n,0)，同时存储每个解的切割方案：即每种价格需要切割的个数
 'n            钢条的长度
 'arr_num      每个价格长度需要切割的个数
-Function BottomUpCutRod(arr_price() As Long, n As Long, arr() As Long, arr_num() As Long) As Long
+'best_len     '价值量最好的，也就是拆分时按这个拆分
+Function BottomUpCutRod(arr_price() As Long, n As Long, arr() As Long, arr_num() As Long, best_len As Long) As Long
     Dim i As Long, j As Long
     Dim i_max As Long
     Dim i_tmp As Long
@@ -45,8 +53,8 @@ Function BottomUpCutRod(arr_price() As Long, n As Long, arr() As Long, arr_num()
     '如果超过了有价格的最大长度，只能拆分
     If n > max_price_col Then
         Do While n > max_price_col
-            n = n - max_price_col
-            BottomUpCutRod = BottomUpCutRod(arr_price, max_price_col, arr, arr_num) + BottomUpCutRod(arr_price, n, arr, arr_num)
+            n = n - best_len
+            BottomUpCutRod = BottomUpCutRod(arr_price, best_len, arr, arr_num, best_len) + BottomUpCutRod(arr_price, n, arr, arr_num, best_len)
         Loop
         Exit Function
     End If

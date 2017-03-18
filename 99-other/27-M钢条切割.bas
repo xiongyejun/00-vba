@@ -4,7 +4,7 @@ Option Explicit
 Sub vba_main()
     Dim i As Long
     Dim t As Double
-    Const N As Long = 200
+    Const N As Long = 1
     
     t = Timer
     For i = 1 To N
@@ -20,6 +20,13 @@ Sub vba_main()
 End Sub
 
 '直接按照 价格/米 降序排列，直接输出
+
+'算法不对，有问题
+'比如            3-8元、2-3元、8-20元
+'切割长度        8
+'排序            3-8元-2.67元/米、8-20元-2.5元/米、2-3元-1.5元/米
+'结果            3米的2个、2米的1个，金额19元，低于8-20元
+'原因            未充分考虑被平均的情况
 Function vba_main_2()
     Dim arr_price() As Long '0列-长度 1列-价格
     Dim arr_sort() As Double

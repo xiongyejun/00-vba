@@ -1,0 +1,55 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CStack"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Explicit
+
+Private arr() As Long
+Private StackMaxSize As Long
+Private StackTop As Long        '指向Stack下1个空白位置
+
+Property Let MaxSize(value As Long)
+    StackMaxSize = value
+    ReDim arr(StackMaxSize - 1) As Long
+End Property
+Property Get MaxSize() As Long
+    MaxSize = StackMaxSize
+End Property
+'弹出
+Function Pop() As Long
+    If StackTop = 0 Then
+        MsgBox "空栈。"
+        Pop = -1
+        Exit Function
+    End If
+   
+    StackTop = StackTop - 1
+    Pop = arr(StackTop)
+End Function
+'压入
+Function Push(value As Long)
+    If StackTop = Me.MaxSize Then
+        MsgBox "满栈。"
+        Exit Function
+    End If
+   
+    arr(StackTop) = value
+    StackTop = StackTop + 1
+End Function
+'清空
+Function EmptyStack()
+    StackTop = 0
+End Function
+
+Private Sub Class_Initialize()
+    Me.MaxSize = 10
+    StackTop = 0
+End Sub
+Private Sub Class_Terminate()
+    Erase arr
+End Sub

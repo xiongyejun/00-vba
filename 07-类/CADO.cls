@@ -21,8 +21,8 @@ Property Let SQL(str As String)
     StrSql = str
 End Property
 
-Property Let SourceFile(FileName As String)
-    StrSourceFile = FileName
+Property Let SourceFile(fileName As String)
+    StrSourceFile = fileName
    
     AdoOpen
 End Property
@@ -105,7 +105,7 @@ Sub ResultToExcel(rng As Range, Optional IfNeedField As Boolean = True)
        
         If IfNeedField Then
             For i = 0 To rst.Fields.Count - 1
-                rng.Offset(0, i).value = rst.Fields(i).Name
+                rng.Offset(0, i).Value = rst.Fields(i).Name
             Next i
             Set rng = rng.Offset(1, 0)
         End If
@@ -119,6 +119,32 @@ Err:
     MsgBox Err.Description
     IfErr = True
 End Sub
+
+'str_sql        sql语句
+'source_name    数据源名称
+'wk             需要添加透视表的工作簿
+'rng            透视表的位置
+'pc_table_name  透视表的名称
+Function CreatePivotCache(wk As Workbook, rng As Range, pc_table_name As String) As Long
+    Dim pc As PivotCache
+       
+    On Error GoTo Err
+   
+    If Not IfErr Then
+        RstOpen
+        
+        Set pc = wk.PivotCaches.Add(xlExternal)
+        Set pc.Recordset = rst
+        pc.CreatePivotTable rng, pc_table_name
+        
+    End If
+   
+    Exit Function
+   
+Err:
+    MsgBox Err.Description
+    IfErr = True
+End Function
 
 Function GetFieldInfo(fieldNameArr() As String, field_type() As String) As Long '-1表示出错，k表示字段数量
     Dim i As Long

@@ -89,6 +89,7 @@ Function write_file_byte(arr(), l_index As Long, Optional str_un_hide As String 
     k = 3
     Do Until arr(l_index, k) = 0
         If VBA.Len(str_un_hide) > 0 Then
+            If k - 3 > UBound(arr_un_hide) Then Exit Do
             b_input = arr_un_hide(k - 3)
         ElseIf k Mod 2 = 1 Then
             b_input = VBA.CByte(&HD)
@@ -103,6 +104,35 @@ Function write_file_byte(arr(), l_index As Long, Optional str_un_hide As String 
     Close num_file
 End Function
 
+Function Workspace(arr() As String)
+    Dim str_PROJECT As String
+    Dim if_short As Boolean
+    Dim str_workspace As String
+    Dim re As Object
+    Dim match_coll As Object
+    Dim i As Long
+    Dim arr_address() As Long
+    
+    str_PROJECT = Me.read_stream("PROJECT", arr_address, if_short)
+    str_workspace = VBA.Split(str_PROJECT, "[Workspace]")(1)
+    
+    Set re = CreateObject("VBScript.RegExp") 'Microsoft VBScript Tegular Expressions 5.5
+    With re
+        .Global = True                  '搜索全部字符，false搜索到第1个即停止
+        .MultiLine = False              '是否多行
+        .IgnoreCase = False             '区分大小写
+        .Pattern = "\S*=\d{2,3},\S*"
+        Set match_coll = .Execute(str_workspace)            '返回MatchCollection对象
+    End With
+    
+    ReDim arr(match_coll.Count - 1) As String
+    For i = 0 To match_coll.Count - 1
+        arr(i) = match_coll(i).Value
+    Next i
+    
+    Set re = Nothing
+    Set match_coll = Nothing
+End Function
 
 Function FindVba(arr()) As Long
     Dim str_PROJECT As String
@@ -541,8 +571,9 @@ Function read_stream(dir_name As String, arr_address() As Long, if_short As Bool
 '            start_address = VarPtr(file_byte(0)) + arr_SAT(l_SID) * CFHEADER_SIZE + CFHEADER_SIZE
             For j = 1 To n_size
                 arr_address(j - 1, 0) = j - 1
-                arr_address(j - 1, 1) = arr_SAT(l_SID) * CFHEADER_SIZE + CFHEADER_SIZE  '+VarPtr(file_byte(0))
+                arr_address(j - 1, 1) = l_SID * CFHEADER_SIZE + CFHEADER_SIZE  '+VarPtr(file_byte(0))
                 CopyMemory VarPtr(arr_result((j - 1) * CFHEADER_SIZE)), arr_address(j - 1, 1) + VarPtr(file_byte(0)), CFHEADER_SIZE
+                l_SID = arr_SAT(l_SID)
             Next j
             
         End If

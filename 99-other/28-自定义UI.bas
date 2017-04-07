@@ -77,3 +77,4 @@ Function get_my_doc() As String
     
     Set wsh = Nothing
 End Function
+'&#13;可以不换行，不知道为何

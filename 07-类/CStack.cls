@@ -13,8 +13,11 @@ Private arr() As Long
 Private StackMaxSize As Long
 Private StackTop As Long        '指向Stack下1个空白位置
 
-Property Let MaxSize(value As Long)
-    StackMaxSize = value
+Property Get Top() As Long
+    Top = StackTop
+End Property
+Property Let MaxSize(Value As Long)
+    StackMaxSize = Value
     ReDim arr(StackMaxSize - 1) As Long
 End Property
 Property Get MaxSize() As Long
@@ -32,13 +35,13 @@ Function Pop() As Long
     Pop = arr(StackTop)
 End Function
 '压入
-Function Push(value As Long)
+Function Push(Value As Long)
     If StackTop = Me.MaxSize Then
         MsgBox "满栈。"
         Exit Function
     End If
    
-    arr(StackTop) = value
+    arr(StackTop) = Value
     StackTop = StackTop + 1
 End Function
 '清空

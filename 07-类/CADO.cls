@@ -48,6 +48,11 @@ Private Function Provider() As String
        
         Provider = "Provider=Microsoft.Ace.OLEDB.12.0;Data Source=" & StrSourceFile
         Provider = Provider & ";Extended Properties=""TEXT;HDR=YES"";"
+
+    'ElseIf VBA.Right$(StrSourceFile, 4) = ".txt" Then
+    '    Provider = "Provider=SQLOLEDB;Initial Catalog=" & myDataBase & ";User ID=" & myname & ";Password=" & mypassword & ";Data Source=" & serverip
+    'serverip"127.0.0.1"，表示本机，如果数据库在其他电脑上，就写那个电脑的IP
+    'Integrated Security=SSPI;Persist Security Info=True;
     End If
    
 End Function

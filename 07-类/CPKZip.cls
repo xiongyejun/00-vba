@@ -9,18 +9,21 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+'-----------------------------------------ZIP文件结构-------------------------------------------
+'ZIP文件结构的说明，下面这个帖子介绍的挺详细
 'http://club.excelhome.net/thread-1251530-1-1.html
 '把a1.txt、a2.txt、a3.txt压缩到a.zip中以后
 '其内容在磁盘上的摆放顺序为h1、a1[]、h2、a2[]、h3、a3[]、c1、c2、c3、EOCD
 '其中a1[]、a2[]、a3[]是三个文本文件压缩后的数据块
 'h1、h2、h3和c1、c2、c3分别是三个数据块对应的Local File Header和Central Directory FileHeader结构
 'EOCD是文件中唯一的EndOfCentralDirectory结构。
+'-----------------------------------------ZIP文件结构-------------------------------------------
 
+
+'-----------------------------------------ZIP文件解压缩-------------------------------------------
 'http://www.cnblogs.com/esingchan/p/3958962.html
+'-----------------------------------------ZIP文件解压缩-------------------------------------------
 
-'Private Type Deflate
-
-'End Type
 
 'local file header+file data+data descriptor这是一段ZIP压缩数据
 'Local file header
@@ -34,7 +37,7 @@ Private Type LocalFileHeader
     CRC_32  As Long             '说明采用的算法
     CompressedSize As Long      '压缩后的大小
     UncompressedSize As Long    '压缩前的大小
-    FileNameLen As Integer      '文件名长度 (n)
+    FileNameLength As Integer      '文件名长度 (n)
     ExtraFieldLength As Integer '附加信息长度 (m)
 
 '    FileName() As Byte          '文件名
@@ -76,6 +79,7 @@ Private Type EndOfCentralDirectory
 '    Comment() as Byte                       '注释内容
 End Type
 
+'记录ZIP文件结构，文件名，文件数据，和解压后的文件大小
 Private Type DataType
     FileName As String
     bytData() As Byte
@@ -88,15 +92,20 @@ Private Type CodeInterval
     Start As Long
     End As Long
 End Type
+
 '扩展用
 Private Type MyType
     i_rows As Long
     arr_data(1 To 2, 1 To 1) As Byte
 End Type
 
+'Private Declare Sub CopyMemory Lib "kernel32" Alias "RtlMoveMemory" (ByVal Destination As LongPtr, ByVal Source As LongPtr, ByVal Length As Long)
+
 Private ZipFileName As String
-Private ArrZipFileList() As String
+Private ArrZipFileList() As String      'ZIP文件名数组
 Private ArrData() As DataType           '获取数据块
+'Private FileByte() As Byte
+'Private FileAddress As LongPtr
 
 Private dic_1 As Object 'literal/length Huffman码表1
 Private dic_2 As Object 'distance Huffman码表2
@@ -110,7 +119,166 @@ Property Get FileName() As String
     FileName = ZipFileName
 End Property
 
-Function Deflate()
+Function GetData()
+    Dim iFreefile As Integer
+    Dim bytBuffer() As Byte
+    Dim i As Long
+    Dim lOffsetEOCD As Long
+    Dim lLOF As Long
+    Dim oEOCD As EndOfCentralDirectory
+    Dim oCDFH As CentralDirectoryHeader
+    Dim oLFH As LocalFileHeader, lOffsetLFH As Long, lDataOffset As Long
+    Dim lOffset As Long
+    
+    iFreefile = FreeFile
+    
+    Open ZipFileName For Binary As iFreefile
+        lLOF = LOF(iFreefile)
+        ReDim bytBuffer(lLOF - 1) As Byte
+        Get iFreefile, 1, bytBuffer
+        
+        For i = lLOF - 1 - 4 To 0 Step -1
+            '查找EndOfCentralDirectory的Signature标识
+            If bytBuffer(i) = &H50 And bytBuffer(i + 1) = &H4B And bytBuffer(i + 2) = &H5 And bytBuffer(i + 3) = &H6 Then
+                lOffsetEOCD = i + 1
+                Exit For
+            End If
+        Next
+        
+        If lOffsetEOCD = 0 Then
+            Err.Raise 1, , "zip文件格式可能有误，请检查"
+            Exit Function
+        End If
+        '读取EndOfCentralDirectory
+        Get iFreefile, lOffsetEOCD, oEOCD
+        lOffset = oEOCD.OffsetOfCD + 1
+        
+        ReDim ArrData(oEOCD.TotalNumberOfCDRecords - 1) As DataType
+        ReDim ArrZipFileList(0 To oEOCD.TotalNumberOfCDRecords - 1) As String
+        For i = 0 To oEOCD.TotalNumberOfCDRecords - 1
+            '读取CentralDirectoryHeader的数据
+            Get iFreefile, lOffset, oCDFH
+            '根据CentralDirectoryHeader的FileNameLength长度，往后读取文件名
+            ReDim bytBuffer(0 To oCDFH.FileNameLength - 1) As Byte
+            Get iFreefile, lOffset + Len(oCDFH), bytBuffer
+            
+            ArrZipFileList(i) = StrConv(bytBuffer, vbUnicode)
+            ArrData(i).FileName = ArrZipFileList(i)
+            lOffsetLFH = oCDFH.LocalFileHeaderOffset + 1        'VBA里open打开的是从1开始的
+            '获取LocalFileHeader
+            Get iFreefile, lOffsetLFH, oLFH
+'            Debug.Print oLFH.Signature
+            ReDim ArrData(i).bytData(oLFH.CompressedSize - 1) As Byte
+            '找到数据的开始位置
+            lDataOffset = lOffsetLFH + oLFH.FileNameLength + oLFH.ExtraFieldLength + Len(oLFH)
+            Get iFreefile, lDataOffset, ArrData(i).bytData
+            
+            ArrData(i).UncompressedSize = oLFH.UncompressedSize
+            
+            '下1个CentralDirectoryHeader的位置
+            lOffset = lOffset + Len(oCDFH) + oCDFH.FileCommentLength + oCDFH.FileNameLength + oCDFH.ExtraFieldLength
+        Next
+    Close iFreefile
+
+End Function
+
+'
+'    '-----------------------------------------------------------------------------------
+'    '用CopyMemory获取的数据不正确
+'    'lOffsetLFH = oCDFH.LocalFileHeaderOffset 一直是0
+'    'oLFH也是错的
+'    '不知道为什么啊
+'
+'    '用open读取的又是对的，哪错了？
+'    '------------------------------------------------------------------------------------
+'获取ZIP文件数据结构
+'Private Function GetData()
+'    Dim iFreefile As Integer
+'    Dim i As Long
+'    Dim lOffsetEOCD As Long
+'    Dim lLOF As Long
+'    Dim oEOCD As EndOfCentralDirectory
+'    Dim oCDFH As CentralDirectoryHeader
+'    Dim oLFH As LocalFileHeader, lOffsetLFH As Long, lDataOffset As Long
+'    Dim lOffset As Long
+'    Dim FileNameByte() As Byte
+'
+'    iFreefile = FreeFile
+'    '读取ZIP文件数据到FileByte
+'    Open ZipFileName For Binary As iFreefile
+'    lLOF = LOF(iFreefile)
+'    ReDim FileByte(lLOF - 1) As Byte
+'    Get iFreefile, 1, FileByte
+'    Close iFreefile
+'    FileAddress = VarPtr(FileByte(0))
+'
+'    '查找EndOfCentralDirectory的Signature标识
+'    For i = lLOF - 1 - Len(oEOCD) + 4 To 0 Step -1
+'        If FileByte(i) = &H50 And FileByte(i + 1) = &H4B And FileByte(i + 2) = &H5 And FileByte(i + 3) = &H6 Then
+'            lOffsetEOCD = i
+'            Exit For
+'        End If
+'    Next
+'
+'    If lOffsetEOCD = 0 Then
+'        Err.Raise 1, , "zip文件格式可能有误，请检查"
+'        Exit Function
+'    End If
+'    '读取EndOfCentralDirectory
+'    CopyMemory VarPtr(oEOCD.Signature), FileAddress + lOffsetEOCD, Len(oEOCD)
+'    'CentralDirectoryHeader的起始位置
+'    lOffset = oEOCD.OffsetOfCD
+'    lOffsetLFH = 0
+
+'
+'    ReDim ArrData(oEOCD.TotalNumberOfCDRecords - 1) As DataType
+'    ReDim ArrZipFileList(0 To oEOCD.TotalNumberOfCDRecords - 1) As String
+'    For i = 0 To oEOCD.TotalNumberOfCDRecords - 1
+'        '读取CentralDirectoryHeader的数据
+'        CopyMemory VarPtr(oCDFH.Signature), FileAddress + lOffset, Len(oCDFH)
+'
+'         '获取LocalFileHeader
+''        lOffsetLFH = oCDFH.LocalFileHeaderOffset         '如果用open读取，要注意VBA里open打开的是从1开始的   ,这里第2个也是0，不知道为什么了
+''        CopyMemory VarPtr(oLFH.Signature), FileAddress + lOffsetLFH, Len(oLFH)     '这里总是获取不到正确的数据，不知道为什么！下面的oLFH.ExtraFieldLength只能先用0替代下
+'
+'        ReDim ArrData(i).bytData(oCDFH.CompressedSize - 1) As Byte
+'        '找到数据的开始位置
+'        lDataOffset = lOffsetLFH + oCDFH.FileNameLength + Len(oLFH) + 0 ' oLFH.ExtraFieldLength
+'        CopyMemory VarPtr(ArrData(i).bytData(0)), FileAddress + lDataOffset, oCDFH.CompressedSize
+'
+'        ArrData(i).UncompressedSize = oCDFH.UncompressedSize
+'
+'         '根据CentralDirectoryHeader的FileNameLength长度，往后读取文件名
+'        ReDim FileNameByte(0 To oCDFH.FileNameLength - 1) As Byte
+'        CopyMemory VarPtr(FileNameByte(0)), FileAddress + lOffset + Len(oCDFH), oCDFH.FileNameLength
+'
+'
+'        ArrZipFileList(i) = StrConv(FileNameByte, vbUnicode)
+'        ArrData(i).FileName = ArrZipFileList(i)
+'
+'        '下1个CentralDirectoryHeader的位置
+'        lOffset = lOffset + Len(oCDFH) + oCDFH.FileCommentLength + oCDFH.FileNameLength + oCDFH.ExtraFieldLength
+'        lOffsetLFH = lOffsetLFH + Len(oLFH) + oCDFH.FileNameLength + oCDFH.CompressedSize
+'    Next
+'
+'End Function
+
+Function InflateAll()
+    
+End Function
+
+Function InflateIndex(i_index As Long) As Byte()
+    On Error GoTo err_handle
+    
+    InflateIndex = Inflate(ArrData(i_index).bytData, ArrData(i_index).UncompressedSize)
+    Exit Function
+    
+err_handle:
+    InflateIndex = VBA.StrConv("解压出错。", vbFromUnicode)
+End Function
+
+
+Function Inflate(b() As Byte, i_UncompressedSize As Long) As Byte()
     Dim str_bit As String
     Dim i_CL1 As Long, i_CL2 As Long, i_CCL As Long
     Dim i_mid As Long, i As Long
@@ -126,12 +294,20 @@ Function Deflate()
     ReDim arr_CodeLen(18) As Long
     ReDim arr_CCL(18) As Long
     
-    str_bit = GetBit(ArrData(0).bytData)
+    str_bit = GetBit(b)
     
     i_mid = 1
-'    WriteTxtLineByOpen ArrData(0).FileName, str_bit
 '       Header：3个比特，第一个比特如果是1，表示此部分为最后一个压缩数据块；否则表示这是.ZIP文件的某个中间压缩数据块，但后面还有其他数据块。
-'            第2、3比特表示3个选择：压缩数据中没有使用Huffman、使用静态Huffman、使用动态Huffman，这是对LZ77编码后的literal/length/distance进行进一步编码的标志。
+'   第2、3比特表示3个选择：
+'    00 - no compression                                没有使用Huffman
+'    01 - compressed with fixed Huffman codes           静态Huffman
+'    10 - compressed with dynamic Huffman codes         动态Huffman
+'    11 - reserved (error)
+    If "01" <> VBA.Mid$(str_bit, 2, 2) Then
+        '低比特在先
+        Inflate = VBA.StrConv("不是动态Huffman，暂不支持", vbFromUnicode)
+        Exit Function
+    End If
     
     i_mid = i_mid + 3
     
@@ -170,18 +346,68 @@ Function Deflate()
     cls_huffman.PrintBit dic
     Set cls_huffman = Nothing
 
-'接下来是对CL1（码长）序列经过游程编码（SQ1：缩短的整数序列）后，并对SQ1继续用Huffman编码后的比特流。包含HLIT+257个CL1，其解码码表为Huffman码表3，用以构造Huffman码表1；
-    
+'   接下来是对CL1（码长）序列经过游程编码（SQ1：缩短的整数序列）后，并对SQ1继续用Huffman编码后的比特流。包含HLIT+257个CL1，其解码码表为Huffman码表3，用以构造Huffman码表1；
     RunLength dic, str_bit, i_mid, arr_CL1
     GetHuffmanOne arr_CL1, i_CL1
-'接下来是对CL2（码长）序列经过游程编码（SQ2：缩短的整数序列）后，并对SQ2继续用Huffman编码后的比特流。包含HDIST+1个CL2，其解码码表为Huffman码表3，用于构造Huffman码表2；
+'   接下来是对CL2（码长）序列经过游程编码（SQ2：缩短的整数序列）后，并对SQ2继续用Huffman编码后的比特流。包含HDIST+1个CL2，其解码码表为Huffman码表3，用于构造Huffman码表2；
     RunLength dic, str_bit, i_mid, arr_CL2
     GetHuffmanTwo arr_CL2, i_CL2
     
-'先按照Huffman码表1解码，如果解码结果是长度（>256），则接下来按照Huffman码表2解码
-    Uncompressed str_bit, i_mid
+'   先按照Huffman码表1解码，如果解码结果是长度（>256），则接下来按照Huffman码表2解码
+    Inflate = UnCompressed(str_bit, i_mid, i_UncompressedSize)
     
 End Function
+
+Private Function UnCompressed(str_bit As String, ByRef i_mid As Long, i_UncompressedSize As Long) As Byte()
+    Dim str As String
+    Dim arr_un_compressed() As Byte
+    Dim i_distanse As Long, i_len As Long
+    Dim p_arr As Long
+    Dim i As Long
+    Dim num As Long
+    
+    ReDim arr_un_compressed(i_UncompressedSize - 1) As Byte
+    
+    p_arr = -1
+    Do Until 0 'i_mid = ArrData(0).UncompressedSize
+        Do Until dic_1.Exists(str)
+            str = str & VBA.Mid$(str_bit, i_mid, 1)
+            i_mid = i_mid + 1
+        Loop
+        
+        num = dic_1(str)
+        str = ""
+        
+        If num < 256 Then
+            p_arr = p_arr + 1
+            arr_un_compressed(p_arr) = num
+        ElseIf num = 256 Then
+            Exit Do
+        Else
+            '接下来按照Huffman码表2解码
+            i_len = num - 257 + 3
+            Do Until dic_2.Exists(str)
+                str = str & VBA.Mid$(str_bit, i_mid, 1)
+                i_mid = i_mid + 1
+            Loop
+            
+            i_distanse = dic_2(str)
+'            If i_distanse > p_arr Then Stop
+            
+            str = ""
+            '找到了distance、length
+            For i = p_arr - i_distanse + 1 To p_arr - i_distanse + i_len
+                p_arr = p_arr + 1
+                arr_un_compressed(p_arr) = arr_un_compressed(i)
+            Next
+            
+        End If
+    Loop
+        
+    UnCompressed = arr_un_compressed
+    
+End Function
+
 
 'Huffman编码后的码字长度不会特别长，PK认为最长不会超过15，也就是树的深度不会超过15
 'literal/length码树
@@ -199,8 +425,8 @@ Private Function GetHuffmanOne(arr_CL1() As Long, i_CL)
     
     Set cls_huffman = New CHuffman
     cls_huffman.SetArrData arr_num, arr_CL1
+    dic_1.RemoveAll
     cls_huffman.PrintBit dic_1
-    '对大于257的有扩展的如何处理？
     
     ArrCode(0).Bits = 0: ArrCode(0).Start = 3: ArrCode(0).End = 3
     ArrCode(1).Bits = 0: ArrCode(1).Start = 4: ArrCode(1).End = 4
@@ -244,9 +470,7 @@ Private Function GetHuffmanOne(arr_CL1() As Long, i_CL)
     dic_1.RemoveAll
     For i = 0 To UBound(arr_key)
         If arr_code(i) >= 257 + 8 And arr_code(i) - 257 < 28 Then
-            
-            If ArrCode(arr_code(i) - 257).Bits = 0 Then Stop
-            
+                        
             Combin ArrCode(arr_code(i) - 257).Bits, str_add
             
             For i_row = ArrCode(arr_code(i) - 257).Start To ArrCode(arr_code(i) - 257).End
@@ -255,7 +479,7 @@ Private Function GetHuffmanOne(arr_CL1() As Long, i_CL)
                 For i_col = UBound(str_add, 2) To 1 Step -1
                     str_key = str_key & str_add(i_row - ArrCode(arr_code(i) - 257).Start + 1, i_col)
                 Next
-                '表示长度，dic_1里有记录257的
+                '表示长度，dic_1里有记录257 = 0 的，所以要+257-3
                 dic_1(str_key) = i_row + 257 - 3
             Next
             
@@ -282,6 +506,7 @@ Private Function GetHuffmanTwo(arr_CL2() As Long, i_CL)
     
     Set cls_huffman = New CHuffman
     cls_huffman.SetArrData arr_num, arr_CL2
+    dic_2.RemoveAll
     cls_huffman.PrintBit dic_2
     
     ArrCode(0).Bits = 0: ArrCode(0).Start = 1: ArrCode(0).End = 1
@@ -351,55 +576,6 @@ Private Function GetHuffmanTwo(arr_CL2() As Long, i_CL)
     
     Set cls_huffman = Nothing
 End Function
-
-Private Function Uncompressed(str_bit As String, ByRef i_mid As Long)
-    Dim str As String
-    Dim arr_un_compressed() As Byte
-    Dim i_distanse As Long, i_len As Long
-    Dim p_arr As Long
-    Dim i As Long
-    Dim num As Long
-    
-    ReDim arr_un_compressed(ArrData(0).UncompressedSize - 1) As Byte
-    
-    p_arr = -1
-    Do Until 0 'i_mid = ArrData(0).UncompressedSize
-        Do Until dic_1.Exists(str)
-            str = str & VBA.Mid$(str_bit, i_mid, 1)
-            i_mid = i_mid + 1
-        Loop
-        
-        num = dic_1(str)
-        str = ""
-        
-        If num < 256 Then
-            p_arr = p_arr + 1
-            arr_un_compressed(p_arr) = num
-        ElseIf num = 256 Then
-            Exit Do
-        Else
-            '接下来按照Huffman码表2解码
-            i_len = num - 257 + 3
-            Do Until dic_2.Exists(str)
-                str = str & VBA.Mid$(str_bit, i_mid, 1)
-                i_mid = i_mid + 1
-            Loop
-            
-            i_distanse = dic_2(str)
-            str = ""
-            '找到了distance、length
-            For i = p_arr - i_distanse + 1 To p_arr - i_distanse + i_len
-                p_arr = p_arr + 1
-                arr_un_compressed(p_arr) = arr_un_compressed(i)
-            Next
-            
-        End If
-    Loop
-        
-    Debug.Print VBA.StrConv(arr_un_compressed, vbUnicode)
-    
-End Function
-
 
 '游程编码
 '0-15是CL1可能出现的值
@@ -482,73 +658,8 @@ Private Function ArrClearZero(arr() As Long, arr_num() As Long)
 End Function
 
 
-Private Function GetData()
-    Dim iFreefile As Integer
-    Dim bytBuffer() As Byte
-    Dim i As Integer
-    Dim lOffsetEOCD As Long
-    Dim lLOF As Long
-    Dim oEOCD As EndOfCentralDirectory
-    Dim oCDFH As CentralDirectoryHeader
-    Dim oLFH As LocalFileHeader, lOffsetLFH As Long, lDataOffset As Long
-    Dim lOffset As Long
-    
-    iFreefile = FreeFile
-    
-    Open ZipFileName For Binary As iFreefile
-        lLOF = LOF(iFreefile)
-        ReDim bytBuffer(lLOF - 1) As Byte
-        Get iFreefile, 1, bytBuffer
-        
-        For i = lLOF - 1 - 4 To 0 Step -1
-            '查找EndOfCentralDirectory的Signature标识
-            If bytBuffer(i) = &H50 And bytBuffer(i + 1) = &H4B And bytBuffer(i + 2) = &H5 And bytBuffer(i + 3) = &H6 Then
-                lOffsetEOCD = i + 1
-                Exit For
-            End If
-        Next
-        
-        If lOffsetEOCD = 0 Then
-            Err.Raise 1, , "zip文件格式可能有误，请检查"
-            Exit Function
-        End If
-        '读取EndOfCentralDirectory
-        Get iFreefile, lOffsetEOCD, oEOCD
-        lOffset = oEOCD.OffsetOfCD + 1
-        
-        ReDim ArrData(oEOCD.TotalNumberOfCDRecords - 1) As DataType
-        ReDim ArrZipFileList(0 To oEOCD.TotalNumberOfCDRecords - 1) As String
-        For i = 0 To oEOCD.TotalNumberOfCDRecords - 1
-            '读取CentralDirectoryHeader的数据
-            Get iFreefile, lOffset, oCDFH
-            '根据CentralDirectoryHeader的FileNameLength长度，往后读取文件名
-            ReDim bytBuffer(0 To oCDFH.FileNameLength - 1) As Byte
-            Get iFreefile, lOffset + Len(oCDFH), bytBuffer
-            
-            ArrZipFileList(i) = StrConv(bytBuffer, vbUnicode)
-            ArrData(i).FileName = ArrZipFileList(i)
-            lOffsetLFH = oCDFH.LocalFileHeaderOffset + 1        'VBA里open打开的是从1开始的
-            '获取LocalFileHeader
-            Get iFreefile, lOffsetLFH, oLFH
-'            Debug.Print oLFH.Signature
-            ReDim ArrData(i).bytData(oLFH.CompressedSize - 1) As Byte
-            '找到数据的开始位置
-            lDataOffset = lOffsetLFH + oLFH.FileNameLen + oLFH.ExtraFieldLength + Len(oLFH)
-            Get iFreefile, lDataOffset, ArrData(i).bytData
-            
-            ArrData(i).UncompressedSize = oLFH.UncompressedSize
-            
-            '下1个CentralDirectoryHeader的位置
-            lOffset = lOffset + Len(oCDFH) + oCDFH.FileCommentLength + oCDFH.FileNameLength + oCDFH.ExtraFieldLength
-        Next
-    Close iFreefile
-
-End Function
-
 Private Sub Class_Initialize()
-    ZipFileName = GetFileName()
-    
-    If VBA.Len(ZipFileName) Then GetData
+    ZipFileName = GetFileName("选择文件。", "ZIP XLSX XLSM|*.zip;*.xlsx;*.xlsm")
     
     Set dic_1 = CreateObject("Scripting.Dictionary")
     Set dic_2 = CreateObject("Scripting.Dictionary")
@@ -581,15 +692,15 @@ Private Function Combin(i_col As Byte, arr_result() As String) As Long
     
     CombinCols arr_MyType, arr_result
     
-    With Range("A1").Resize(UBound(arr_result, 1), UBound(arr_result, 2))
-        .Resize(1, 10).EntireColumn.Clear
-        .Value = arr_result
-    End With
+'    With Range("A1").Resize(UBound(arr_result, 1), UBound(arr_result, 2))
+'        .Resize(1, 10).EntireColumn.Clear
+'        .Value = arr_result
+'    End With
     
     Combin = UBound(arr_result, 1)
 End Function
     
-'选择2-6列的数据进行排列组合
+'选择n列的数据进行排列组合
 '每1列的数据：
 '1、自身重复的次数=其后各列相乘
 '2、整列需要循环的次数=其前各列相乘
@@ -631,5 +742,30 @@ Private Function CombinCols(arr_MyType() As MyType, arr_result() As String)
         Next j
     Next i
     
+End Function
+
+Private Function GetBit(b() As Byte) As String
+    Dim arr_bit() As String
+    Dim i_len As Long
+    Dim i As Long
+    Dim j As Long
+    Dim tmp As Byte
+
+    i_len = UBound(b)
+
+    ReDim arr_bit(i_len) As String
+
+    For i = 0 To i_len
+        tmp = b(i)
+        For j = 1 To 8
+
+            arr_bit(i) = arr_bit(i) & VBA.CStr(tmp Mod 2)
+            tmp = tmp \ 2
+        Next j
+    Next i
+
+    GetBit = VBA.Join(arr_bit, "")
+
+    Erase arr_bit
 End Function
 

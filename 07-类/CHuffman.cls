@@ -34,6 +34,16 @@ Private arr_data() As Long, arr_code_len() As Long
 Private arr_node() As Node
 Private p_arr_node As Long
 
+Function PrintArrData()
+    Dim k As Long
+    
+    k = UBound(arr_data) + 1
+    
+    Range("A:B").Clear
+    Range("A1").Resize(k, 1).Value = Application.WorksheetFunction.Transpose(arr_data)
+    Range("B1").Resize(k, 1).Value = Application.WorksheetFunction.Transpose(arr_code_len)
+End Function
+
 Function SetArrData(ArrData() As Long, ArrCodeLen() As Long)
     Dim i As Long
     Dim k As Long
@@ -57,6 +67,8 @@ Function SetArrData(ArrData() As Long, ArrCodeLen() As Long)
         
         i = i_mid
     Loop
+    
+'    PrintArrData
     
     ReDim arr_node(k * 2) As Node
     p_arr_node = -1
@@ -177,20 +189,10 @@ Private Function InsertSort(arr_code_len() As Long, arr_val() As Long, Low As Lo
 
 End Function
 
-
-'Private Function AddNode(NodeValue As Long, WeightValue As Long, LeftIndex As Long, RightIndex As Long)
-'    p_arr_node = p_arr_node + 1
-'    arr_node(p_arr_node).Weight = WeightValue
-'    arr_node(p_arr_node).Data = NodeValue
-'    arr_node(p_arr_node).Left = LeftIndex
-'    arr_node(p_arr_node).Right = RightIndex
-'    arr_node(p_arr_node).Parent = NULL_VAL
-'End Function
-
 Private Sub Class_Initialize()
     
 End Sub
 
 Private Sub Class_Terminate()
-    Erase arr_data
+    Erase arr_data, arr_node, arr_code_len
 End Sub

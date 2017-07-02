@@ -9,6 +9,9 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+'作者QQ 648555205
+'淘宝店铺 https://item.taobao.com/item.htm?spm=686.1000925.0.0.H2w0Qj&id=534896704968
+
 Private arr() As Long
 Private StackMaxSize As Long
 Private StackTop As Long        '指向Stack下1个空白位置

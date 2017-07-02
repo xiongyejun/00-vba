@@ -9,6 +9,9 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+'×÷ÕßQQ 648555205
+'ÌÔ±¦µêÆÌ https://item.taobao.com/item.htm?spm=686.1000925.0.0.H2w0Qj&id=534896704968
+
 Private StrSourceFile As String
 Private StrSql As String
 Private IfErr As Boolean
@@ -28,6 +31,8 @@ Property Let SourceFile(fileName As String)
 End Property
 
 Private Function Provider() As String
+'A Left Join [Excel 12.0;Database=" & ThisWorkbook.FullName & ";].[" & ActiveSheet.Name & "$] B On
+
     If VBA.Right$(StrSourceFile, 4) = ".xls" Then
         Provider = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" & StrSourceFile
         Provider = Provider & ";Extended Properties=""Excel 8.0;HDR=YES"";"
@@ -70,6 +75,7 @@ errHandle:
 End Function
 
 Private Function RstOpen()
+    If rst.State = 1 Then rst.Close
     rst.Open StrSql, AdoConn, 0, 1 ' adOpenForwardOnly, adLockReadOnly
 End Function
 

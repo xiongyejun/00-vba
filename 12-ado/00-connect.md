@@ -1,4 +1,8 @@
+﻿Microsoft.ACE.OLEDB.12.0 安装文件：
 
+
+
+http://www.microsoft.com/downloads/details.aspx?displaylang=zh-cn&FamilyID=7554f536-8c28-4598-9b72-ef94e038c891
 
 
 https://www.connectionstrings.com/

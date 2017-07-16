@@ -40,8 +40,8 @@ Function PrintArrData()
     k = UBound(arr_data) + 1
     
     Range("A:B").Clear
-    Range("A1").Resize(k, 1).Value = Application.WorksheetFunction.Transpose(arr_data)
-    Range("B1").Resize(k, 1).Value = Application.WorksheetFunction.Transpose(arr_code_len)
+    Range("A1").Resize(k, 1).value = Application.WorksheetFunction.Transpose(arr_data)
+    Range("B1").Resize(k, 1).value = Application.WorksheetFunction.Transpose(arr_code_len)
 End Function
 
 Function SetArrData(ArrData() As Long, ArrCodeLen() As Long)

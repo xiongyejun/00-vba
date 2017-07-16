@@ -104,12 +104,17 @@ End Type
 Private ZipFileName As String
 Private ArrZipFileList() As String      'ZIP文件名数组
 Private ArrData() As DataType           '获取数据块
+
 'Private FileByte() As Byte
 'Private FileAddress As LongPtr
 
 Private dic_1 As Object 'literal/length Huffman码表1
 Private dic_2 As Object 'distance Huffman码表2
 '
+Property Let FileName(value As String)
+    ZipFileName = value
+End Property
+
 
 Property Get ZipFileList() As String()
     ZipFileList = ArrZipFileList
@@ -269,6 +274,11 @@ End Function
 
 Function InflateIndex(i_index As Long) As Byte()
     On Error GoTo err_handle
+'    Dim i As Long
+'
+'    For i = 0 To UBound(ArrData(i_index).bytData)
+'        Cells(i + 1, 1).value = ArrData(i_index).bytData(i)
+'    Next
     
     InflateIndex = Inflate(ArrData(i_index).bytData, ArrData(i_index).UncompressedSize)
     Exit Function
@@ -659,8 +669,6 @@ End Function
 
 
 Private Sub Class_Initialize()
-    ZipFileName = GetFileName("选择文件。", "ZIP XLSX XLSM|*.zip;*.xlsx;*.xlsm")
-    
     Set dic_1 = CreateObject("Scripting.Dictionary")
     Set dic_2 = CreateObject("Scripting.Dictionary")
 End Sub

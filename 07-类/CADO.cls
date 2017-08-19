@@ -20,6 +20,16 @@ Private IfErr As Boolean
 Dim AdoConn As Object ' ADODB.Connection
 Dim rst As Object
 
+'    Dim c_ado As CADO
+'    Dim str_sql As String
+'
+'    Set c_ado = New CADO
+'    c_ado.SourceFile = ThisWorkbook.FullName
+'    c_ado.SQL = str_sql
+'    c_ado.ExcuteSql
+'
+'    Set c_ado = Nothing
+
 Property Let SQL(str As String)
     StrSql = str
 End Property

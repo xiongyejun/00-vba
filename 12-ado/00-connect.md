@@ -2,8 +2,11 @@
 
 
 
+2007 Office system 驱动程序：数据连接组件
 http://www.microsoft.com/downloads/details.aspx?displaylang=zh-cn&FamilyID=7554f536-8c28-4598-9b72-ef94e038c891
 
+Microsoft Access 2010 数据库引擎可再发行程序包
+https://www.microsoft.com/zh-cn/download/details.aspx?id=13255
 
 https://www.connectionstrings.com/
 [enter link description here](https://www.connectionstrings.com/)

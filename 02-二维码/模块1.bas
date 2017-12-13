@@ -1,6 +1,8 @@
 Attribute VB_Name = "Ä£¿é1"
 Option Explicit
 
+'http://club.excelhome.net/thread-1043020-1-1.html
+
 Private Type PictDesc
     cbSizeofStruct As Long
     picType As Long

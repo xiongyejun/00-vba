@@ -1,0 +1,30 @@
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="RibbonUI_onLoad">
+<ribbon>
+<tabs>
+  <tab id="Access" label="Access">
+    <group id="GroupID" label="数据结构+算法">     
+
+      <button id="NewAccess" label="新建Access文件&#13;" size="large" onAction="rbNewAccess" imageMso="FileSaveAsAccess2007" />
+      <button id="AddTable" label="新建表&#13;" size="large" onAction="rbAddTable" imageMso="ImexRunImport" />
+
+      <separator id="rxsep1"/>
+      <box id="boxDo" boxStyle="vertical" visible="true">
+       <button id="GetTableStruct" label="获取表结构&#13;" onAction="rbGetTableStruct" imageMso="CreateTable" />
+       <button id="InsertData" label="添加数据&#13;" onAction="rbInsertData" imageMso="TableDrawTable" />      
+      </box>
+
+
+      <separator id="rxsep2"/>
+      <button id="rbSelectDB" label="选择文件&#13;" onAction="rbSelectDB" imageMso="FileOpen" />
+      <labelControl id="lbDBPath" getLabel="rb_GetLabel"/>    
+      <dropDown id="ddTable" label="Table:" visible="true" onAction="rbddTable_click"
+                                  getItemID="rbddTable_getItemId"
+                                  getItemCount="rbddTable_getItemCount"
+                                  getItemLabel="rbddTable_getItemLabel"/>
+
+
+    </group>
+  </tab>
+</tabs>
+</ribbon>
+</customUI>

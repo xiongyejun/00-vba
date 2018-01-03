@@ -83,7 +83,7 @@ Function Union(ReturnArr() As Variant, ByRef ReturnIndex As Long, Optional bUnio
         Union = OnlyUnion(ReturnArr, ReturnIndex)
     End If
 End Function
-'求并集,仅仅是把数据合并到一起，原来10列，合并后还是10列，只是去重复了
+'求并集,仅仅是把数据合并到一起，原来10列，合并后还是10列，只是合并同类项了
 Private Function OnlyUnion(ReturnArr() As Variant, ByRef ReturnIndex As Long) As String
     'Excel处理的数据一般不会很大，直接定义个足够大的数组
     ReDim ReturnArr(d.Rows - 1, d.Items(0).LowCol To d.Items(0).HighCol) As Variant
@@ -91,19 +91,24 @@ Private Function OnlyUnion(ReturnArr() As Variant, ByRef ReturnIndex As Long) As
     Dim dic As Object
     Set dic = CreateObject("Scripting.Dictionary")
     
-    Dim i As Long, iCol As Long, iRow As Long
+    Dim i As Long, iCol As Long, iRow As Long, p_row As Long
     Dim strKey As String
     ReturnIndex = 0
     For i = 0 To d.iNext - 1
         For iRow = d.Items(i).Low To d.Items(i).High
             strKey = VBA.CStr(d.Items(i).arr(iRow, d.ColKey))
             If Not dic.Exists(strKey) Then
-                dic(strKey) = 0
+                dic(strKey) = ReturnIndex
                 '复制数据
                 For iCol = d.Items(i).LowCol To d.Items(i).HighCol
                     ReturnArr(ReturnIndex, iCol) = d.Items(i).arr(iRow, iCol)
                 Next iCol
                 ReturnIndex = ReturnIndex + 1
+            
+            Else
+                '存在就累加数据
+                p_row = dic(strKey)
+                ReturnArr(p_row, d.ValCol) = VBA.CDbl(d.Items(i).arr(iRow, d.ValCol)) + ReturnArr(p_row, d.ValCol)
             End If
         Next
     Next
@@ -112,11 +117,6 @@ Private Function OnlyUnion(ReturnArr() As Variant, ByRef ReturnIndex As Long) As
 End Function
 '求并集,合并的时候，同时把每组数据里的valCol分别放置
 Private Function UnionValues(ReturnArr() As Variant, ByRef ReturnIndex As Long) As String
-    If d.ValCol = -1 Then
-        UnionValues = ErrNotSetValCol
-        Exit Function
-    End If
-    
     Dim ReturnCols As Long, p_col As Long, p_row As Long
     ReturnCols = d.Cols - 1 + d.iNext
     
@@ -142,15 +142,15 @@ Private Function UnionValues(ReturnArr() As Variant, ByRef ReturnIndex As Long) 
                 p_col = 0
                 For iCol = d.Items(i).LowCol To d.Items(i).HighCol
                     If iCol <> d.ValCol Then
-                        p_col = p_col + 1
                         ReturnArr(ReturnIndex, p_col) = d.Items(i).arr(iRow, iCol)
+                        p_col = p_col + 1
                     End If
                     
                 Next iCol
                 ReturnIndex = ReturnIndex + 1
             End If
             
-            p_col = d.Items(0).HighCol + i
+            p_col = d.Cols - 1 + i
             '累加数据
             ReturnArr(p_row, p_col) = VBA.CDbl(d.Items(i).arr(iRow, d.ValCol)) + ReturnArr(p_row, p_col)
         Next
@@ -183,11 +183,12 @@ Private Function Check() As String
     ElseIf d.ColKey < d.Items(0).LowCol Or d.ColKey > d.Items(0).HighCol Then '关键字列越界
         Check = ErrColKeyOutBounds
         Exit Function
-    ElseIf d.ValCol <> -1 Then
-        If d.ValCol < d.Items(0).LowCol Or d.ValCol > d.Items(0).HighCol Then
-            Check = ErrValColOutBounds
-            Exit Function
-        End If
+    ElseIf d.ValCol = -1 Then
+        Check = ErrNotSetValCol
+        Exit Function
+    ElseIf d.ValCol < d.Items(0).LowCol Or d.ValCol > d.Items(0).HighCol Then
+        Check = ErrValColOutBounds
+        Exit Function
     End If
     '对比每组数据的列是否相等
     For i = 0 To d.iNext - 2
@@ -221,3 +222,38 @@ Private Sub Class_Initialize()
     d.ValCol = -1
 End Sub
 
+
+'    Dim i_row As Long
+'
+'    ActiveSheet.AutoFilterMode = False
+'    i_row = Cells(Cells.Rows.Count, 1).End(xlUp).Row
+'    If i_row < 2 Then MsgBox "没有数据": Exit Sub
+'
+'    Dim c_coll As New CCollection
+'    Dim arr() As Variant
+'
+'    arr = Range("A1").Resize(i_row, 3).Value
+'    c_coll.AddData arr, 1, i_row
+'
+'    arr = Range("D1").Resize(i_row, 3).Value
+'    c_coll.AddData arr, 1, i_row
+'
+'    arr = Range("g1").Resize(i_row, 3).Value
+'    c_coll.AddData arr, 1, i_row
+'
+'    c_coll.ColKey = 1
+'    c_coll.ValCol = 2
+'
+'    Dim result() As Variant, resultIndex As Long
+'    Dim strReturn As String
+'
+'    strReturn = c_coll.Union(result, resultIndex, True)
+'
+'    If VBA.Len(strReturn) Then
+'        MsgBox strReturn
+'    Else
+'        With Range("J1").Resize(resultIndex, UBound(result, 2) - LBound(result, 2) + 1)
+'            .EntireColumn.Clear
+'            .Value = result
+'        End With
+'    End If

@@ -21,10 +21,14 @@ Property Get Items() As String() 'item type
     If GetItems() Then Items = Arr
 End Property
 
-Function Item(i As Long) As String
+Function GetItem(i As Long) As String
     If i < iNext Then
-        Item = Arr(i)
+        GetItem = arr(i)
     End If
+End Function
+
+Function SetItem(i As Long, Value As String
+    arr(i) = Value
 End Function
 
 Function Add(Value As String) 'item type)

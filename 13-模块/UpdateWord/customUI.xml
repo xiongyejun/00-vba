@@ -1,0 +1,14 @@
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui">
+<ribbon>
+<tabs>
+  <tab id="TabID" label="数据更新">
+    <group id="GroupID" label="数据结构+算法">
+      <button id="rbUpdateExcel" label="更新Excel&#13;" size="large" onAction="rbUpdateExcel" imageMso="FileSaveAsExcelXlsx" />
+      <button id="rbUpdateWord" label="更新Word&#13;" size="large" onAction="rbUpdateWord" imageMso="FileSaveAsWordDocx" />
+      <button id="rbAddComToWord" label="添加批注项到Word&#13;" size="large" onAction="rbAddComToWord" imageMso="ReviewNewComment" />
+
+    </group>
+  </tab>
+</tabs>
+</ribbon>
+</customUI>

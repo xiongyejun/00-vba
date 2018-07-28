@@ -76,6 +76,10 @@ End Sub
 
 
 '*******Function that do all the work that will be called by the macro*********
+'Level : 1= Only the files in the folder, 2 to ? levels of subfolders
+'ExtChoice :0=(xls|xlsx|xlsm|xlsb), 1=xls , 2=xlsx, 3=xlsm, 4=xlsb, 5=csv, 6=txt, 7=all files, 8=(xlsx|xlsm|xlsb), 9=(csv|txt)
+'FileFilterOption : 0=No Filter, 1=Begins, 2=Ends, 3=Contains
+'FileNameFilterStr : Search string used when FileFilterOption = 1, 2 or 3
 
 Function GetFilesOnMacWithOrWithoutSubfolders(Level As Long, ExtChoice As Long, _
                                               FileFilterOption As Long, FileNameFilterStr As String)

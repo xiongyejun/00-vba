@@ -1,0 +1,39 @@
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="RibbonUI_onLoad">
+<ribbon>
+<tabs>
+  <tab id="TabIDUpdate" label="数据更新">
+    <group id="GroupIDFileList" label="资料清单">
+      <button id="rbOpenFile" label="打开文件&#13;" size="large" onAction="rbOpenFile" imageMso="FileClose" />
+      <button id="rbInputFileListFields" label="输入标题&#13;" size="large" onAction="rbInputFileListFields" imageMso="TableDrawTable" />
+      <button id="rbCopyPath" label="复制路径&#13;" size="large" onAction="rbCopyPath" imageMso="MarkAsUnread" />
+
+    </group>
+
+    <group id="GroupIDUpdate" label="更新Word、PPT">
+      <button id="rbUpdateExcel" label="获取Excel数据&#13;" size="large" onAction="rbUpdateExcel" imageMso="DataRefreshAll" />
+      <button id="rbUpdateWord" label="更新Word&#13;" size="large" onAction="rbUpdateWord" imageMso="FileSaveAsWordDocx" />
+      <button id="rbAddComToWord" label="添加批注项到Word&#13;" size="large" onAction="rbAddComToWord" imageMso="ReviewNewComment" />
+      <button id="rbUpdatePPT" label="更新PPT&#13;" size="large" onAction="rbUpdatePPT" imageMso="FileSaveAsPowerPointPptx" />
+      <button id="rbInputUpdateFields" label="输入标题&#13;" size="large" onAction="rbInputUpdateFields" imageMso="TableDrawTable" />
+    </group>
+
+    <group id="GroupIDUpdateWorkbook" label="更新Excel之间的链接">
+      <button id="rbUpdateWorkbook" label="更新&#13;" size="large" onAction="rbUpdateWorkbook" imageMso="FileSaveAsExcelXlsx" />
+      <button id="rbOpenWorkbook" label="打开&#13;" size="large" onAction="rbOpenWorkbook" imageMso="FileOpen" />
+      <button id="rbAddValidation" label="类型数据有效性&#13;" size="large" onAction="rbAddValidation" imageMso="DataValidation" />
+      <button id="rbInputUpdateWorkbookFields" label="输入标题&#13;" size="large" onAction="rbInputUpdateWorkbookFields" imageMso="TableDrawTable" />
+    </group>
+
+    <group id="UpdateGroupIDOther" label="其他">
+     <button id="rbCloseMeUpdate" label="关闭&#13;" size="large" onAction="rbCloseMe" imageMso="ReviewDeleteComment" />  
+
+     <button idMso="VisualBasic"/>
+     <toggleButton idMso="Filter"/>
+     <gallery idMso="CellFillColorPicker" label="AAA"/>
+    </group>
+
+
+  </tab>
+</tabs>
+</ribbon>
+</customUI>

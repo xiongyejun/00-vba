@@ -4,7 +4,7 @@ Option Explicit
 Public Const D_基准日 As Date = #12/31/2019#
 Public Const M_最低工资标准 As Double = 1680#
 Public Const M_社会平均工资 As Double = 7000#
-
+Public Const M_医疗计算基数 As Double = 7000# * 0.6
 
 
 Public Enum ReturnCode
@@ -44,26 +44,19 @@ Public Enum Pos
     Cols = 备注
 End Enum
 
-Type DataStruct
+Public Type DataStruct
     Src() As Variant
     Rows As Long
     Cols As Long
     
-    c As CCount
     Result() As Variant
 End Type
 
-Sub vba_main()
-    Dim d As DataStruct
-    
-    If ReturnCode.ErrRT = ReadData(d) Then Exit Sub
-    
-    On Error GoTo err_handle
-    
-    
-    Exit Sub
-err_handle:
-    MsgBox Err.Description
-End Sub
+Public Type ResultStruct
+    养老保险 As Double
+    医疗保险 As Double
+    Other As Double
+End Type
+
 
 

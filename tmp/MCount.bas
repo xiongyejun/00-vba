@@ -39,7 +39,11 @@ End Enum
 Private Enum ResultEnum
     退休时间
     补偿类别
-    补偿金额
+    
+    养老保险
+    医疗保险
+    Other
+    合计
     
     Cols
 End Enum
@@ -74,21 +78,49 @@ Private Function ReadData(d As DataStruct) As ReturnCode
 End Function
 Private Function GetResult(d As DataStruct) As ReturnCode
     Dim i As Long
+    Dim retTmp As ResultStruct
     ReDim d.Result(1 To d.Rows, 1 To ResultEnum.Cols) As Variant
-    Set d.c = New CCount
     
     For i = Pos.RowStart To d.Rows
         GetTuiXiuDate d, i
         Get补偿类别 d, i
         
-    If i = 12 Then Stop
+'    If i = 3 Then Stop
 
-        If VBA.IsDate(d.Src(i, Pos.参加工作时间)) Then d.Result(i, ResultEnum.补偿金额 + 1) = VBA.CallByName(d.c, VBA.CStr(d.Result(i, ResultEnum.补偿类别 + 1)), VbGet, VBA.CDate(d.Src(i, Pos.参加工作时间)), VBA.CDate(d.Result(i, ResultEnum.退休时间 + 1)))
+        If VBA.IsDate(d.Src(i, Pos.参加工作时间)) Then
+            Select Case VBA.CStr(d.Result(i, ResultEnum.补偿类别 + 1)) ', VbGet, VBA.CDate(d.Src(i, Pos.参加工作时间)), VBA.CDate(d.Result(i, ResultEnum.退休时间 + 1)))
+            Case "退休"
+                retTmp = MFunc.退休()
+            Case "抚恤"
+                retTmp = MFunc.抚恤()
+                
+                
+            Case "内部退养"
+                retTmp = MFunc.内部退养(VBA.CDate(d.Result(i, ResultEnum.退休时间 + 1)))
+            Case "协议社保"
+                retTmp = MFunc.协议社保(VBA.CDate(d.Result(i, ResultEnum.退休时间 + 1)))
+                   
+                   
+            Case "经济补偿"
+                retTmp = MFunc.经济补偿(VBA.CDate(d.Src(i, Pos.参加工作时间)), VBA.CDate(d.Result(i, ResultEnum.退休时间 + 1)))
+            Case "未参保"
+                retTmp = MFunc.未参保(VBA.CDate(d.Src(i, Pos.参加工作时间)), VBA.CDate(d.Result(i, ResultEnum.退休时间 + 1)))
+                        
+            End Select
+            
+            d.Result(i, ResultEnum.养老保险 + 1) = retTmp.养老保险
+            If VBA.CStr(d.Src(i, Pos.职工身份)) <> "小集体2" Then d.Result(i, ResultEnum.医疗保险 + 1) = retTmp.医疗保险
+            d.Result(i, ResultEnum.Other + 1) = retTmp.Other
+            d.Result(i, ResultEnum.合计 + 1) = "=SUM(RC[-3]:RC[-1])"
+        End If
     Next
     
-    d.Result(1, ResultEnum.补偿金额 + 1) = "补偿金额"
+    d.Result(1, ResultEnum.养老保险 + 1) = "养老保险"
+    d.Result(1, ResultEnum.医疗保险 + 1) = "医疗保险"
+    d.Result(1, ResultEnum.Other + 1) = "其他"
     d.Result(1, ResultEnum.补偿类别 + 1) = "补偿类别"
     d.Result(1, ResultEnum.退休时间 + 1) = "正常退休时间"
+    d.Result(1, ResultEnum.合计 + 1) = "合计"
     
     Cells(1, Pos.Cols + 1).Resize(d.Rows, ResultEnum.Cols).value = d.Result
     
@@ -156,20 +188,6 @@ Private Function GetTuiXiuDate(d As DataStruct, iRow As Long) As ReturnCode
     GetTuiXiuDate = SuccessRT
 End Function
 
-Sub Test()
-    Dim c As New CCount
-    
-    Dim i As Long
-    
-    i = VBA.CLng(VBA.CallByName(c, "Test", VbGet, 200))
-    
-    Debug.Print i
-    
-    i = VBA.CLng(VBA.CallByName(c, "退休", VbGet))
-    
-    Debug.Print i
-End Sub
-
 Sub TestTmp()
     Dim d As DataStruct
     
@@ -191,4 +209,4 @@ Sub TestTmp()
         End If
     Next
     
-End Sub
+End Sub

@@ -10,17 +10,17 @@
     </group>
 
     <group id="GroupIDUpdate" label="更新Word、PPT">
-      <button id="rbUpdateExcel" label="获取Excel数据&#13;" size="large" onAction="rbUpdateExcel" imageMso="DataRefreshAll" />
+      <button id="rbUpdateExcel" label="获取Excel数据&#13;" supertip="根据设置的链接，获取Excel单元格数据。" size="large" onAction="rbUpdateExcel" imageMso="DataRefreshAll" />
       <button id="rbUpdateWord" label="更新Word&#13;" size="large" onAction="rbUpdateWord" imageMso="FileSaveAsWordDocx" />
-      <button id="rbAddComToWord" label="添加批注项到Word&#13;" size="large" onAction="rbAddComToWord" imageMso="ReviewNewComment" />
-      <button id="rbUpdatePPT" label="更新PPT&#13;" size="large" onAction="rbUpdatePPT" imageMso="FileSaveAsPowerPointPptx" />
-      <button id="rbInputUpdateFields" label="输入标题&#13;" size="large" onAction="rbInputUpdateFields" imageMso="TableDrawTable" />
+      <button id="rbAddFieldToWord" label="添加域到Word&#13;" supertip="根据设置的项目，将Word中不存在的域添加到Word。" size="large" onAction="rbAddFieldToWord" imageMso="ContactPictureMenu" />
+      <button id="rbUpdatePPT" label="更新PPT&#13;" supertip="根据设置的项目，和PPT对象的名称对应关系，更新数据。" size="large" onAction="rbUpdatePPT" imageMso="FileSaveAsPowerPointPptx" />
+      <button id="rbInputUpdateFields" label="输入标题&#13;" supertip="输入所需要的格式标题。" size="large" onAction="rbInputUpdateFields" imageMso="TableDrawTable" />
     </group>
 
     <group id="GroupIDUpdateWorkbook" label="更新Excel之间的链接">
-      <button id="rbUpdateWorkbook" label="更新&#13;" size="large" onAction="rbUpdateWorkbook" imageMso="FileSaveAsExcelXlsx" />
-      <button id="rbOpenWorkbook" label="打开&#13;" size="large" onAction="rbOpenWorkbook" imageMso="FileOpen" />
-      <button id="rbAddValidation" label="类型数据有效性&#13;" size="large" onAction="rbAddValidation" imageMso="DataValidation" />
+      <button id="rbUpdateWorkbook" label="更新&#13;" supertip="根据设置，更新Excel之间的数据。" size="large" onAction="rbUpdateWorkbook" imageMso="FileSaveAsExcelXlsx" />
+      <button id="rbOpenWorkbook" label="打开&#13;" supertip="根据设置的工作簿名称，打开文件。" size="large" onAction="rbOpenWorkbook" imageMso="FileOpen" />
+      <button id="rbAddValidation" label="类型数据有效性&#13;" supertip="添加数据有效性，方便选择增加更新类型。" size="large" onAction="rbAddValidation" imageMso="DataValidation" />
       <button id="rbInputUpdateWorkbookFields" label="输入标题&#13;" size="large" onAction="rbInputUpdateWorkbookFields" imageMso="TableDrawTable" />
     </group>
 

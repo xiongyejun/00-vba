@@ -1,6 +1,10 @@
 Attribute VB_Name = "MUpdateWord"
 Option Explicit
 
+Enum WordField  
+    wdFieldEmpty = -1 
+End Enum
+
 Enum Pos
     RowStart = 2
     TheName = 2
@@ -23,42 +27,33 @@ Type DataStructDoc
     Doc As Object  'Word.Document
 End Type
 
-Sub UpdateWordByCom()  '通过批注形式
+Sub UpdateWordByCom()  '通过域形式
     Dim i As Long, k As Long
-    Dim Com, ComRngT As String, MyRange, iStart As Long, iEnd As Long
+    Dim f As Object, strKey As String
     Dim d As DataStructDoc
     
     '初始化数据
     If InitData(d) = -1 Then Exit Sub
     
-    If d.Doc.Comments.Count = 0 Then
-        MsgBox "当前Word没有批注。"
+    If d.Doc.Fields.Count = 0 Then
+        MsgBox "当前Word没有域。"
         GoTo A
     End If
     
     Dim strValue As String
-    For i = 1 To d.Doc.Comments.Count
-        Set Com = d.Doc.Comments(i)
-        ComRngT = Com.Range.Text
-        strValue = d.dic(ComRngT)
-                    
-        If d.dic.Exists(ComRngT) Then
-            Set MyRange = Com.Scope
-            With MyRange
-                iStart = .Start
-                iEnd = .End
-                iEnd = iEnd - VBA.Len(.Text) + VBA.Len(strValue)
-                .Text = strValue
-            End With
-            
-            Set MyRange = d.Doc.Range(Start:=iStart, End:=iEnd)
-            Com.Delete
-            d.Doc.Comments.Add MyRange, ComRngT
+    For i = 1 To d.Doc.Fields.Count
+        Set f = d.Doc.Fields(i)
+        strKey = GetKeyFromFieldCode(f.Code)
+        
+        If d.dic.Exists(strKey) Then
+            strValue = d.dic(strKey)
+            If f.Result.Text <> strValue Then
+                f.Result.Text = strValue
+            End If
         Else
-            If MsgBox(VBA.Format(i, "第0个批注\[") & ComRngT & "]：这个项目在Excel里没有。" & vbNewLine & "是否继续？", vbYesNo) = vbNo Then
+            If MsgBox(VBA.Format(i, "第0个域\[") & strValue & "]：这个项目在Excel里没有。" & vbNewLine & "是否继续？", vbYesNo) = vbNo Then
                 GoTo A
             End If
-            
         End If
 
     Next i
@@ -71,7 +66,6 @@ Sub UpdateWordByCom()  '通过批注形式
       
 A:
 '    DocApp.Quit
-    Set MyRange = Nothing
     Set d.Doc = Nothing
     Set d.dic = Nothing
 End Sub
@@ -159,7 +153,7 @@ Private Function InitData(d As DataStructDoc) As ReturnCode
     InitData = SuccessRT
 End Function
 
-Sub AddComToWord()
+Sub AddFieldToWord()
     Dim d As DataStructDoc
     Dim i As Long
     
@@ -167,22 +161,36 @@ Sub AddComToWord()
     
     '已经有的项目就不需要了
     Dim str_key As String
-    For i = 1 To d.Doc.Comments.Count
-        str_key = d.Doc.Comments(i).Range.Text
+    For i = 1 To d.Doc.Fields.Count
+        str_key = GetKeyFromFieldCode(d.Doc.Fields(i).Code)
         If d.dic.Exists(str_key) Then
             d.dic.Remove str_key
         End If
     Next
     
-    Dim tmpKey
+    Dim tmpKey, tmpItem
     tmpKey = d.dic.Keys()
     
     Dim p As Object '段落
+    Dim f As Object
     For i = 0 To UBound(tmpKey)
         Set p = d.Doc.Paragraphs.Add
         p.Range.Text = tmpKey(i) & vbNewLine
-        d.Doc.Comments.Add p.Range, VBA.CStr(tmpKey(i))
     Next
     
-    MsgBox VBA.Format(i, "已添加0条批注。")
+    Dim pCount As Long
+    pCount = d.Doc.Paragraphs.Count
+    For i = 0 To UBound(tmpKey)
+        Set p = d.Doc.Paragraphs(pCount - i - 1)
+        Set f = p.Range.Fields.Add(p.Range, WordField.wdFieldEmpty, VBA.CStr(tmpKey(i)))
+        f.Result.Text = VBA.CStr(tmpKey(i))
+        f.Result.Bold = False
+    Next i
+    
+    MsgBox VBA.Format(i, "已添加0条域。")
 End Sub
+'从域code里获取关键字key，excel里的项目
+Private Function GetKeyFromFieldCode(StrFieldCode As String) As String
+    ' Key \* MERGEFORMAT
+    GetKeyFromFieldCode = VBA.Mid$(StrFieldCode, 2, VBA.Len(StrFieldCode) - VBA.Len(" \* MERGEFORMAT ") - 1)
+End Function
